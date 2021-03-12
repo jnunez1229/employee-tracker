@@ -23,7 +23,7 @@ INNER JOIN roles r ON r.id = e.role_id
 INNER JOIN departments d ON d.id = r.department_id;
 
 
--- Empoyees by department query
+-- View Employees by dept.
 SELECT e.first_name AS "First Name", e.last_name AS "Last Name", r.title, d.department_name AS "Department" 
 FROM employees e
 INNER JOIN roles r ON r.id = e.role_id 
@@ -33,6 +33,7 @@ WHERE department_name = 'Management';
 SELECT CONCAT(e.first_name," " ,e.last_name) AS full_name, r.title, e.manager_id FROM employees e
 INNER JOIN roles r ON r.id = e.role_id WHERE e.manager_id = 1; 
 
+SELECT
 
 
 
@@ -43,19 +44,10 @@ FROM employees e
 INNER JOIN roles r ON r.id = e.role_id INNER JOIN departments d ON d.id = r.department_id 
 WHERE department_name = 'Sales';
             
--- ON DELETE CASCADE
+
 
 -- Add Employee 
 INSERT INTO employees(first_name, last_name, role_id, manager_id) 
 VALUES('Jerry', 'Seinfield', (SELECT id FROM roles WHERE title = 'Software Developer' ), 
 (SELECT id FROM (SELECT id FROM employees WHERE CONCAT(first_name," ",last_name) = "Drew Barrymore" )AS tmptable));
            
-SELECT Errors;
-
--- GIVEN a command-line application that accepts user input
--- WHEN I start the application
--- THEN I am presented with the following options: view all departments, view all roles, view all employees, add a department, add a role, add an employee, and update an employee role
-
-
--- WHEN I choose to view all employees
--- THEN I am presented with a formatted table showing employee data, including employee ids, first names, last names, job titles, departments, salaries, and managers that the employees report to

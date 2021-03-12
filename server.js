@@ -1,8 +1,7 @@
-const mysql = require('mysql');
+const mysql = require('mysql2');
 const inquirer = require('inquirer');
 const chalk = require('chalk');
 const cTable = require('console.table');
-const connection = require('./config/connection')
 const startScreen = ['View all Employees', 'View all Employees by Department', 'View all Employees by Manager', 'Add Employee', 'Remove Employee', 'Update Employee Role', 'View all Roles', 'Add Role', 'Remove Role', 'View all Departments', 'Add Department', 'Remove Department', 'Exit']
 const allEmployeeQuery = 
     `SELECT e.id, e.first_name AS "First Name", e.last_name AS "Last Name", r.title, d.department_name AS "Department", IFNULL(r.salary, 'No Data') AS "Salary", CONCAT(m.first_name," ",m.last_name) AS "Manager"
@@ -17,6 +16,23 @@ const addEmployeeQuestions = ['What is the first name?', 'What is the last name?
 const roleQuery = 'SELECT * from roles; SELECT CONCAT (e.first_name," ",e.last_name) AS full_name FROM employees e'
 const mgrQuery = 'SELECT CONCAT (e.first_name," ",e.last_name) AS full_name, r.title, d.department_name FROM employees e INNER JOIN roles r ON r.id = e.role_id INNER JOIN departments d ON d.id = r.department_id WHERE department_name = "Management";'
 
+connection = mysql.createConnection({
+    host: 'localhost',
+    port: 3306,
+    user: 'root',
+    password: '32juan',
+    database: 'employee_db',
+    multipleStatements: true
+});
+
+connection.connect((err) => {
+    if (err) {
+        console.log(chalk.white.bgRed(err));
+        return;
+    }
+
+    console.log(chalk.green(`Connected to db. ThreadID: ${connection.threadId}`));
+})
 
 
 
@@ -208,12 +224,12 @@ const removeEmployee = () => {
         console.table(chalk.yellow('All Employees'), results)
         inquirer.prompt([
             {
-                name: 'IDtoRemove',
+                name: 'removeID',
                 type: 'input',
                 message: 'Enter the Employee ID of the person to remove:'
             }
         ]).then((answer) => {
-            connection.query(`DELETE FROM employees where ?`, { id: answer.IDtoRemove })
+            connection.query(`DELETE FROM employees where ?`, { id: answer.removeID })
             startApp();
         })
     })
@@ -256,6 +272,42 @@ const updateRole = () => {
 
 }
 
+const updateManager = () => {
+    const query = `SELECT CONCAT (first_name," ",last_name) AS full_name FROM employees; SELECT title FROM roles`
+    connection.query(query, (err, results) => {
+        if (err) throw err;
+
+        inquirer.prompt([
+            {
+                name: 'empl',
+                type: 'list',
+                choices: function () {
+                    let choiceArray = results[0].map(choice => choice.full_name);
+                    return choiceArray;
+                },
+                message: 'Select an employee to update manager:'
+            },
+            {
+                name: 'newManager',
+                type: 'list',
+                choices: function () {
+                    let choiceArray = results[1].map(choice => choice.title);
+                    return choiceArray;
+                }
+            }
+        ]).then((answer) => {
+            connection.query(`UPDATE employees 
+            SET manager_id = (SELECT id FROM employees WHERE title = ? ) 
+            WHERE id = (SELECT id FROM(SELECT id FROM employees WHERE CONCAT(first_name," ",last_name) = ?) AS tmptable)`, [answer.newManager, answer.empl], (err, results) => {
+                    if (err) throw err;
+                    startApp();
+                })
+        })
+
+
+    })
+
+}
 const viewRoles = () => {
     let query = `SELECT title AS "Title" FROM roles`;
     connection.query(query, (err, results) => {
