@@ -14,4 +14,4 @@
 
 ## Video Explanation
 
-[Video Link]()
+[Video Link](https://drive.google.com/file/d/1sgQ3L8eEFSroGrhB7ZdoXdEBFMIpfAnX/view)
